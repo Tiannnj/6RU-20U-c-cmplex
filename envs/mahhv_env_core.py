@@ -13,15 +13,27 @@ class MahhvEnvCore(object):
         team_size = self.agent_num
         grid_size = (15, 15)
         self.env = vorenv(grid_shape=grid_size, n_agents=team_size, n_opponents=team_size)
-        self.obs_dim = 18  # 设置智能体的观测维度 # set the observation dimension of agents
-        self.ou_obs_dim = 38
-        self.ru_obs_dim = 18
+        self.obs_dim = 24  # 设置智能体的观测维度 # set the observation dimension of agents
+        self.ou_obs_dim = 63
+        self.ru_obs_dim = 24
         self.action_dim = self.env.action_space[0].n  # 设置智能体的动作维度，这里假定为一个五个维度的 # set the action dimension of agents, here set to a five-dimensional
         self.ou_action_dim = self.env.ou_action_space[0].n
         self.ru_action_dim = self.env.ru_action_space[0].n
 
     def reset(self, x):
         s = self.env.Mahhv_reset(x)
+        """
+        # self.agent_num设定为2个智能体时，返回值为一个list，每个list里面为一个shape = (self.obs_dim, )的观测数据
+        # When self.agent_num is set to 2 agents, the return value is a list, each list contains a shape = (self.obs_dim) observation data
+        """
+        sub_agent_obs = []
+        for i in range(self.agent_num):
+            sub_obs = np.array(s[i]) #np.random.random(size=(14,))
+            sub_agent_obs.append(sub_obs)
+        return sub_agent_obs
+
+    def eval_reset(self, x):
+        s = self.env.Mahhv_eval_reset(x)
         """
         # self.agent_num设定为2个智能体时，返回值为一个list，每个list里面为一个shape = (self.obs_dim, )的观测数据
         # When self.agent_num is set to 2 agents, the return value is a list, each list contains a shape = (self.obs_dim) observation data

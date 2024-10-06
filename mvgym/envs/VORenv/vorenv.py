@@ -37,7 +37,6 @@ class vorenv(gym.Env):
         self.n_o_agents = n_o_agents
         self.n_r_agents = n_r_agents
         self.action_space = MultiAgentActionSpace([spaces.Discrete(3) for _ in range(self.n_r_agents)])
-        print(self.action_space, 'self.action_space')
 
         # init vehicles in each time step, set the vehicles run in a 500m road, the speed of each vehicle is set as 10m/s, conencted with D, C, L
         self.n_v = 10
@@ -51,15 +50,19 @@ class vorenv(gym.Env):
         self.o_receive = np.array([[0], [0]])
         self.o_tra = np.array([[0, 0, 0],[0, 0, 0]])
         self.o_fairness = np.array([[0], [0], [0]])
-        self.o_v = np.concatenate((np.array(list(self.v_info.values()))[0:5], np.array(list(self.v_info.values()))[5:10]))
+        self.o_v = np.concatenate((np.array(list(self.v_info.values()))[0:6], np.array(list(self.v_info.values()))[4:10]))
         self.o_info = {_: np.concatenate((self.o_location[_], self.o_v[_], self.o_receive[_],self.o_tra[_])) for _ in range(self.n_o_agents)}
         self.ou_action_space = MultiAgentActionSpace([spaces.Discrete(8) for _ in range(self.n_o_agents)])
 
         # init RU in each time step, RU can observe itself's location, the vehicles info in it range, number of tasks assigned to RSU associated to it, RSU service fairness
         self.n_r_agents = 6
         self.r_location = np.array([[100, 0, 50], [150, 0, 50], [200, 0, 50], [300, 0, 50], [350, 0, 50], [400, 0, 50]])
-        self.r_v = np.concatenate(([np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[1:3, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[3:5, 0:6].reshape(-1)],
-                                   [np.array(list(self.v_info.values()))[5:7, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[6:8, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[8:10, 0:6].reshape(-1)]))
+        self.r_v = np.concatenate(([np.concatenate((np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1), [0,0,0,0,0,0]))],
+                                   [np.array(list(self.v_info.values()))[1:4, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[3:6, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[4:7, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[6:9, 0:6].reshape(-1)],
+                                   [np.concatenate((np.array(list(self.v_info.values()))[8:10, 0:6].reshape(-1), [0,0,0,0,0,0]))]))
         self.r_received = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])
         self.r_received_single = np.array([[0], [0], [0], [0], [0], [0]])
         self.r_assign = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]])
@@ -74,8 +77,8 @@ class vorenv(gym.Env):
                                     [300, -50, 50], [300, 50, 50],
                                     [350, -50, 50], [350, 50, 50],
                                     [400, -50, 50], [400, 50, 50]])
-        self.m_cpu = np.array([[250], [300], [250], [300], [250], [300],
-                      [250], [300], [250], [300], [250], [300]])
+        self.m_cpu = np.array([[7], [8], [9], [7], [8], [9],
+                               [7], [8], [9], [7], [8], [9]])
 
         self._obs_low = np.repeat([-10000], 20)
         self._obs_high = np.repeat([10000], 20)
@@ -120,11 +123,11 @@ class vorenv(gym.Env):
         total_obs = []
         # 每个OU状态生成
         for agent_o in range(self.n_o_agents):
-            _agent_o_obs = np.zeros(38)
+            _agent_o_obs = np.zeros(44)
             _agent_o_obs[0: 3] = self.o_location[agent_o]  # OU location
-            _agent_o_obs[3: 33] = self.o_v[agent_o]  # tasks' information
-            _agent_o_obs[33: 35] = self.o_receive[:].flatten()  # number of tasks received by both OU
-            _agent_o_obs[35: 38] = self.o_tra[agent_o]  # number of tasks assigned to RU by each OU
+            _agent_o_obs[3: 39] = self.o_v[agent_o]  # tasks' information
+            _agent_o_obs[39: 41] = self.o_receive[:].flatten()  # number of tasks received by both OU
+            _agent_o_obs[41: 44] = self.o_tra[agent_o]  # number of tasks assigned to RU by each OU
             _agent_o_obs = _agent_o_obs.flatten().tolist()
             total_obs.append(_agent_o_obs)
         return total_obs
@@ -140,11 +143,11 @@ class vorenv(gym.Env):
         total_obs = []
         # 每个RU状态生成
         for agent_r in range(self.n_r_agents):
-            _agent_r_obs = np.zeros(18)
+            _agent_r_obs = np.zeros(24)
             _agent_r_obs[0: 3] = self.r_location[agent_r]  # RU location
-            _agent_r_obs[3: 15] = self.r_v[agent_r]  # tasks' information
-            _agent_r_obs[15: 16] = self.r_received_single[agent_r]  # number of tasks RU and its nearby RU chooses to receive
-            _agent_r_obs[16: 18] = self.r_assign[agent_r]  # number of tasks RU offloads to each MeNB
+            _agent_r_obs[3: 21] = self.r_v[agent_r]  # tasks' information
+            _agent_r_obs[21: 22] = self.r_received_single[agent_r]  # number of tasks RU and its nearby RU chooses to receive
+            _agent_r_obs[22: 24] = self.r_assign[agent_r]  # number of tasks RU offloads to each MeNB
             _agent_r_obs = _agent_r_obs.flatten().tolist()
             total_obs.append(_agent_r_obs)
         return total_obs
@@ -173,21 +176,21 @@ class vorenv(gym.Env):
         total_obs = []
         # 每个OU状态生成
         for agent_o in range(self.n_o_agents):
-            _agent_o_obs = np.zeros(38)
+            _agent_o_obs = np.zeros(44)
             _agent_o_obs[0: 3] = self.o_location[agent_o]  # OU location
-            _agent_o_obs[3: 33] = self.o_v[agent_o]  # tasks' information
-            _agent_o_obs[33: 35] = self.o_receive[:].flatten()  # number of tasks received by both OU
-            _agent_o_obs[35: 38] = self.o_tra[agent_o]  # number of tasks assigned to RU by each OU
+            _agent_o_obs[3: 39] = self.o_v[agent_o]  # tasks' information
+            _agent_o_obs[39: 41] = self.o_receive[:].flatten()  # number of tasks received by both OU
+            _agent_o_obs[41: 44] = self.o_tra[agent_o]  # number of tasks assigned to RU by each OU
             _agent_o_obs = _agent_o_obs.flatten().tolist()
             # total_obs.append(_agent_o_obs)
 
         # 每个RU状态生成
         for agent_r in range(self.n_r_agents):
-            _agent_r_obs = np.zeros(20)
+            _agent_r_obs = np.zeros(24)
             _agent_r_obs[0: 3] = self.r_location[agent_r]  # RU location
-            _agent_r_obs[3: 15] = self.r_v[agent_r]  # tasks' information
-            _agent_r_obs[15: 16] = self.r_received_single[agent_r]  # number of tasks assigned to RSU associated to it
-            _agent_r_obs[16: 18] = self.r_assign[agent_r]
+            _agent_r_obs[3: 21] = self.r_v[agent_r]  # tasks' information
+            _agent_r_obs[21: 22] = self.r_received_single[agent_r]  # number of tasks assigned to RSU associated to it
+            _agent_r_obs[22: 24] = self.r_assign[agent_r]
             total_obs.append(_agent_r_obs)
 
     #            print('_agent_r_obs', _agent_r_obs)
@@ -220,8 +223,8 @@ class vorenv(gym.Env):
         self.o_receive = np.array([[0], [0]])
         self.o_tra = np.array([[0, 0, 0], [0, 0, 0]])
         self.o_fairness = np.array([[0], [0], [0]])
-        self.o_v = np.concatenate(([np.array(list(self.v_info.values()))[0:5].reshape(-1)],
-                                   [np.array(list(self.v_info.values()))[5:10].reshape(-1)]))
+        self.o_v = np.concatenate(([np.array(list(self.v_info.values()))[0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[4:10].reshape(-1)]))
         self.o_info = {_: np.concatenate(
             (self.o_location[_], self.o_v[_], self.o_receive.flatten(), self.o_tra[_], self.o_fairness[_])) for _ in
             range(self.n_o_agents)}
@@ -230,8 +233,13 @@ class vorenv(gym.Env):
         # init RU in each time step, RU can observe itself's location, the vehicles info in it range, number of tasks assigned to RSU associated to it, RSU service fairness
         self.n_r_agents = 6
         self.r_location = np.array([[100, 0, 50], [150, 0, 50], [200, 0, 50], [300, 0, 50], [350, 0, 50], [400, 0, 50]])
-        self.r_v = np.concatenate(([np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[1:3, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[3:5, 0:6].reshape(-1)],
-                                   [np.array(list(self.v_info.values()))[5:7, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[6:8, 0:6].reshape(-1)], [np.array(list(self.v_info.values()))[8:10, 0:6].reshape(-1)]))
+        print(np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1))
+        self.r_v = np.concatenate(([np.concatenate((np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1), [0,0,0,0,0,0]))],
+                                   [np.array(list(self.v_info.values()))[1:4, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[3:6, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[4:7, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[6:9, 0:6].reshape(-1)],
+                                   [np.concatenate((np.array(list(self.v_info.values()))[8:10, 0:6].reshape(-1), [0,0,0,0,0,0]))]))
         self.r_received = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])
         self.r_received_single = np.array([[0], [0], [0], [0], [0], [0]])
         self.r_assign = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]])
@@ -247,8 +255,75 @@ class vorenv(gym.Env):
                                     [300, -50, 50], [300, 50, 50],
                                     [350, -50, 50], [350, 50, 50],
                                     [400, -50, 50], [400, 50, 50]])
-        self.m_cpu = np.array([[250], [300], [250], [300], [250], [300],
-                      [250], [300], [250], [300], [250], [300]])
+        self.m_cpu = np.array([[7], [8], [9], [7], [8], [9],
+                               [7], [8], [9], [7], [8], [9]])
+
+        # initial agents' observation
+        self.__init_full_obs()
+        return self.Mahhv_get_agent_obs()
+
+
+    def Mahhv_eval_reset(self, x):
+        # UAV initial state, including
+        # Vehicles' locations, task information;
+        # OUs' locations, total bandwidth for receiving and offloading tasks(evenly allocation), OU service fairness
+        # RUs' locations, total bandwidht for offloading tasks(finish bandwidth allocation)
+
+        # initial count
+        self._step_count = 0
+        self._total_episode_reward = [0 for _ in range(self.n_agents)]
+        self._agent_dones = [False for _ in range(self.n_agentsr)]
+
+        total_D = np.random.uniform(0.1, 0.6, 1000)
+        total_C = np.random.uniform(0.1, 0.6, 1000)
+        total_L = np.random.uniform(200, 1000, 1000)
+        self.v_info_all = {_: [(_ % 10) * 50 + 10, 0, 0, total_D[_], total_C[_], total_L[_]] for _ in range(1000)}
+
+        # initial environment
+        # init vehicles in each time step, set the vehicles run in a 500m road, the speed of each vehicle is set as 10m/s
+        self.n_v = 10
+        self.v_info = {k: v for k, v in self.v_info_all.items() if (10 * x <= k < 10 * (x + 1))}
+
+        #        print('self.v_info', self.v_info)
+
+        # init OU in each time step, OU can observe itself's location, the vehicles info in it range, the task number it has received, number of tasks assigned to RU, OU service fairness
+        self.n_o_agents = 2
+        self.o_location = np.array([[150, 0, 50], [350, 0, 50]])
+        self.o_receive = np.array([[0], [0]])
+        self.o_tra = np.array([[0, 0, 0], [0, 0, 0]])
+        self.o_fairness = np.array([[0], [0], [0]])
+        self.o_v = np.concatenate(([np.array(list(self.v_info.values()))[0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[4:10].reshape(-1)]))
+        self.o_info = {_: np.concatenate(
+            (self.o_location[_], self.o_v[_], self.o_receive.flatten(), self.o_tra[_], self.o_fairness[_])) for _ in
+            range(self.n_o_agents)}
+        #        print('self.o_info', self.o_info)
+
+        # init RU in each time step, RU can observe itself's location, the vehicles info in it range, number of tasks assigned to RSU associated to it, RSU service fairness
+        self.n_r_agents = 6
+        self.r_location = np.array([[100, 0, 50], [150, 0, 50], [200, 0, 50], [300, 0, 50], [350, 0, 50], [400, 0, 50]])
+        self.r_v = np.concatenate(([np.concatenate((np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1), [0,0,0,0,0,0]))],
+                                   [np.array(list(self.v_info.values()))[1:4, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[3:6, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[4:7, 0:6].reshape(-1)],
+                                   [np.array(list(self.v_info.values()))[6:9, 0:6].reshape(-1)],
+                                   [np.concatenate((np.array(list(self.v_info.values()))[8:10, 0:6].reshape(-1), [0,0,0,0,0,0]))]))
+        self.r_received = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]])
+        self.r_received_single = np.array([[0], [0], [0], [0], [0], [0]])
+        self.r_assign = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]])
+        self.r_info = {_: np.concatenate((self.r_location[_], self.r_v[_], self.r_received[_], self.r_assign[_]))
+                       for _ in range(self.n_r_agents)}
+
+        # init MeNB in each time step, RSU can observe itself's location, RSU’s CPU frequency
+        self.n_MeNB = 12
+        self.m_location = np.array([[100, -50, 50], [100, 50, 50],
+                                    [150, -50, 50], [150, 50, 50],
+                                    [200, -50, 50], [200, 50, 50],
+                                    [300, -50, 50], [300, 50, 50],
+                                    [350, -50, 50], [350, 50, 50],
+                                    [400, -50, 50], [400, 50, 50]])
+        self.m_cpu = np.array([[7], [8], [9], [7], [8], [9],
+                               [7], [8], [9], [7], [8], [9]])
 
         # initial agents' observation
         self.__init_full_obs()
@@ -282,41 +357,113 @@ class vorenv(gym.Env):
         "agents_action in this situation has 4 arrays for 4 RUs"
         rewards = [self._step_cost for _ in range(self.n_agents)]
         # remain ddl on each OU
-        ou_remain_ddl = [[0] * 5, [0] * 5]
+        ou_remain_ddl = [[0] * 6, [0] * 6]
         for o_num in range(0, self.n_o_agents):
-            for v_num in range(0, 5):
+            for v_num in range(0, 6):
                 ou_remain_ddl[o_num][v_num] = self.o_v[o_num][6 * v_num + 5]
-
-        ou_delay = [[0] * 5, [0] * 5]
-        self.o_v_new = self.o_v
-        self.r_m_new = self.o_v
+        ou_delay = [[0] * 6, [0] * 6]
+        print('self.o_v', self.o_v)
+        self.o_v_new = self.o_v.copy()
+        self.r_m_new = self.o_v.copy()
         rewards_ou = [0 for _ in range(self.n_o_agents)]
         rewards_ru = [0 for _ in range(self.n_r_agents)]
-        r_receive = np.zeros((6, 5))
+        r_receive = np.zeros((6, 6))
         "indicate whether v tasks to collect (all five vehicle tasks) and which RU to offload"
-        ou_action = np.array([[[1], [1], [1], [1], [1], [0], [0], [1], [1], [2]],
-                              [[1], [1], [1], [1], [1], [0], [0], [1], [1], [2]]])
+        ou_action = np.array([[[1], [1], [1], [1], [0], [0],   [0], [0], [1], [1], [2], [2]],
+                              [[0], [0], [1], [1], [1], [1],   [3], [3], [3], [4], [5], [5]]])
         "revise the RU actions and corresponding OU actions consequently"
-        "In 5 OU situation, the group has been divided in 3 groups"
-        for group in range(0, 2):
-            if agents_action[group * 3][0] == 0 and agents_action[group * 3 + 1][0] == 0:
-                agents_action[group * 3][0] = 1
-            if agents_action[group * 3][0] == 1 and agents_action[group * 3 + 1][0] == 1:
-                agents_action[group * 3][0] = 0
-        for group in range(0, 2):
-            if agents_action[group * 3][0] == 1 and agents_action[group * 3 + 1][0] == 0:
-                ou_action[group][6] = [0]
-            if agents_action[group * 3][0] == 0 and agents_action[group * 3 + 1][0] == 1:
-                ou_action[group][6] = [1]
-            if agents_action[group * 3 + 2][0] == 0:
-                ou_action[group][8] = [1]
-            if agents_action[group * 3 + 2][0] == 1:
-                ou_action[group][8] = [2]
+        "In 6 RU situation, the group has been divided in 2 groups"
+        "for OU 1 group"
+        print('agents_action', agents_action)
+        if agents_action[0][0] == 0 and agents_action[1][0] == 0:
+            agents_action[0][0] = 1
+            ou_action[0][7] = [0]
+        if agents_action[0][0] == 1 and agents_action[1][0] == 0:
+            agents_action[0][0] = 1
+            ou_action[0][7] = [0]
+        if agents_action[0][0] == 1 and agents_action[1][0] == 1:
+            agents_action[1][0] = 1
+            agents_action[0][0] = 0
+            ou_action[0][7] = [1]
+        if agents_action[0][0] == 0 and agents_action[1][0] == 1:
+            agents_action[1][0] = 1
+            agents_action[0][0] = 0
+            ou_action[0][7] = [1]
+
+
+        if agents_action[1][1] == 1:
+            ou_action[0][9] = [1]
+        if agents_action[1][1] == 0:
+            ou_action[0][9] = [2]
+
+        if agents_action[2][0] == 1 and agents_action[3][0] == 0:
+            ou_action[0][4] = [1]
+            ou_action[0][10] = [2]
+        if agents_action[2][0] == 0 and agents_action[3][0] == 0:
+            agents_action[2][0] = 1
+            ou_action[0][4] = [1]
+            ou_action[0][10] = [2]
+        if agents_action[2][0] == 0 and agents_action[3][0] == 1:
+            agents_action[3][0] = 1
+            agents_action[2][0] = 0
+            ou_action[1][0] = [1]
+            ou_action[0][10] = [3]
+            ou_action[1][6] = [3]
+        if agents_action[2][0] == 1 and agents_action[3][0] == 1:
+            agents_action[3][0] = 1
+            agents_action[2][0] = 0
+            ou_action[1][0] = [1]
+            ou_action[0][10] = [3]
+            ou_action[1][6] = [3]
+        if agents_action[2][1] == 1 and agents_action[3][1] == 0:
+            agents_action[2][1] = 1
+            ou_action[0][5] = [1]
+            ou_action[0][11] = [2]
+        if agents_action[2][1] == 0 and agents_action[3][1] == 0:
+            agents_action[2][1] = 1
+            ou_action[0][5] = [1]
+            ou_action[0][11] = [2]
+        if agents_action[2][1] == 0 and agents_action[3][1] == 1:
+            agents_action[3][1] = 1
+            agents_action[2][1] = 0
+            ou_action[1][1] = [1]
+            ou_action[0][11] = [3]
+            ou_action[1][7] = [3]
+        if agents_action[2][1] == 1 and agents_action[3][1] == 1:
+            agents_action[3][1] = 1
+            agents_action[2][1] = 0
+            ou_action[1][1] = [1]
+            ou_action[0][11] = [3]
+            ou_action[1][7] = [3]
+
+        "for OU 2 group"
+        if agents_action[4][0] == 1:
+            ou_action[1][8] = [4]
+        if agents_action[4][0] == 0:
+            ou_action[1][8] = [3]
+
+
+        if agents_action[4][1] == 0 and agents_action[5][0] == 0:
+            agents_action[4][1] = 1
+            ou_action[1][10] = [4]
+        if agents_action[4][1] == 1 and agents_action[5][0] == 0:
+            agents_action[4][1] = 1
+            ou_action[1][10] = [4]
+        if agents_action[4][1] == 1 and agents_action[5][0] == 1:
+            agents_action[4][1] = 0
+            agents_action[5][0] = 1
+            ou_action[1][10] = [5]
+        if agents_action[4][1] == 0 and agents_action[5][0] == 1:
+            agents_action[4][1] = 0
+            agents_action[5][0] = 1
+            ou_action[1][10] = [5]
+
 
         o_tra_pre = np.array([[0, 0, 0], [0, 0, 0]])
         num_r_rtr = np.array([[0, 0], [0, 0], [0, 0,], [0, 0], [0, 0], [0, 0]])
         num_o_tra_total = np.array([[0, 0, 0], [0, 0, 0]])
         # take actions for OU agents
+        print('ou_action', ou_action)
         for o_agent_num, o_action in enumerate(ou_action):
             band_o2v = 20
             band_o2r = 20
@@ -326,76 +473,74 @@ class vorenv(gym.Env):
             num_o_tra = o_pre_state[-3:]
             o_tra_pre[o_agent_num] = num_o_tra.copy()
             # communication channel setting
-            for v in range(0, 5):
-                # distance between vehicle v and OU o
-                dis_o2v = np.sqrt((np.array(list(self.v_info.values()))[v + o_agent_num * 4, 0:3][0] -
-                                   self.o_location[o_agent_num][0]) ** 2 +
-                                  (np.array(list(self.v_info.values()))[v + o_agent_num * 4, 0:3][1] -
-                                   self.o_location[o_agent_num][1]) ** 2 +
-                                  (np.array(list(self.v_info.values()))[v + o_agent_num * 4, 0:3][2] -
-                                   self.o_location[o_agent_num][2]) ** 2)
-                # height of OU
-                height_o = 50
-                # the angle used to calculate the los probability (r2m)
-                ars = dis_o2v / height_o
-                # path loss
-                PL = (20 * math.log10(83.78 * dis_o2v + 0.00001)) + 1  # 计算path loss
-                # sum of vehicles to serve
-                num_v = sum(o_action[0:5])
-                # average bandwidth
-                band_even_v = band_o2v / num_v
-                if num_v == 0:
-                    band_even_v = 0
-                # signal noise rate
-                SNR = (0.2 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_v * 10 ** 6 + 0.000001))
-                rate_v2o = band_even_v * math.log2(1 + SNR)
-                # delay from v2o
-                delay_v2o = ((self.o_v[o_agent_num][3 + v * 6]) / rate_v2o) * 1000
-                # transmit task to RUs
-                for r in range(0, 3):
-                    # record o_r_v condition for each RU
-                    # judge how many tasks RU has to retransmit
-                    if o_agent_num == 0:
-                        r = r
-                    else:
-                        r = r + 3
-                    # task amount that each RU received
-                    if o_action[0:5][v] == 1 and o_action[-5:][v] == (r % 3):
-                        r_receive[r][v] = 1
-                    dis_o2r = np.sqrt((self.r_location[r][0] - self.o_location[o_agent_num][0]) ** 2 +
-                                      (self.r_location[r][1] - self.o_location[o_agent_num][1]) ** 2 +
-                                      (self.r_location[r][2] - self.o_location[o_agent_num][2]) ** 2)
+            " ou 1 transmit the task of vehicle 6"
+            for v in range(0, 6):
+                if ou_action[o_agent_num][v] == 1:
+                    # distance between vehicle v and OU o
+                    dis_o2v = np.sqrt((np.array(list(self.v_info.values()))[v + o_agent_num * 4, 0:3][0] -
+                                       self.o_location[o_agent_num][0]) ** 2 +
+                                      (np.array(list(self.v_info.values()))[v + o_agent_num * 4, 0:3][1] -
+                                       self.o_location[o_agent_num][1]) ** 2 +
+                                      (np.array(list(self.v_info.values()))[v + o_agent_num * 4, 0:3][2] -
+                                       self.o_location[o_agent_num][2]) ** 2)
+                    # height of OU
+                    height_o = 50
+                    # the angle used to calculate the los probability (r2m)
+                    ars = dis_o2v / height_o
                     # path loss
-                    PL = (20 * math.log10(83.78 * dis_o2r + 0.00001)) + 1
-                    # sum of task allocated by OU o_agent_num which is equal to the sum of vehicles to serve
-                    num_r = sum(o_action[0:5])
+                    PL = (20 * math.log10(83.78 * dis_o2v + 0.00001)) + 1  # 计算path loss
+                    # sum of vehicles to serve
+                    num_v = sum(o_action[0:5])
                     # average bandwidth
-                    if o_action[0:5][v] == 1:
-                        band_even_r = band_o2r / num_r
-                    else:
-                        band_even_r = 0
+                    band_even_v = band_o2v / num_v
+                    if num_v == 0:
+                        band_even_v = 0
                     # signal noise rate
-                    SNR = (1 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_r * 10 ** 6 + 0.000001))
-                    rate_o2r = band_even_r * math.log2(1 + SNR)  # Mb/s
-                    #                    print('rate_o2r', rate_o2r)
-                    # delay from o to r
-                    if rate_o2r > 0:
-                        delay_o2r = ((self.o_v[o_agent_num][3 + v * 6] * 8) / rate_o2r) * 1000
-                    else:
-                        delay_o2r = 0
-                    # the total delay in the stage 1
-                    #                    print('delay_v2o', delay_v2o, delay_o2r)
-                    # in case that OU choose to receive v task
-                    if o_action[v] == 1:
-                        ou_total_delay = delay_v2o + delay_o2r
-                        ou_delay[o_agent_num][v] = ou_total_delay
-                    # in case that RU is choosen to offloaded
-                    if rate_o2r > 0:
-                        ou_remain_ddl[o_agent_num][v] = ou_remain_ddl[o_agent_num][v] - ou_total_delay
-                        # Generate new vehicle task information
-                        self.o_v_new[o_agent_num][v * 6 + 5] = self.o_v_new[o_agent_num][v * 6 + 5] - ou_total_delay
+                    SNR = (0.2 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_v * 10 ** 6 + 0.000001))
+                    rate_v2o = band_even_v * math.log2(1 + SNR)
+                    # delay from v2o
+                    delay_v2o = ((self.o_v[o_agent_num][3 + v * 6]) / rate_v2o) * 1000
+                    # transmit task to RUs
+                    for r in range(0, 6):
+                        # record o_r_v condition for each RU
+                        # judge how many tasks RU has to retransmit
+                        # task amount that each RU received
+                        if o_action[0:6][v] == 1 and o_action[-6:][v] == r:
+                            r_receive[r][v] = 1
+                            dis_o2r = np.sqrt((self.r_location[r][0] - self.o_location[o_agent_num][0]) ** 2 +
+                                              (self.r_location[r][1] - self.o_location[o_agent_num][1]) ** 2 +
+                                              (self.r_location[r][2] - self.o_location[o_agent_num][2]) ** 2)
+                            # path loss
+                            PL = (20 * math.log10(83.78 * dis_o2r + 0.00001)) + 1
+                            # sum of task allocated by OU o_agent_num which is equal to the sum of vehicles to serve
+                            num_r = sum(o_action[0:6])
+                            # average bandwidth
+                            if o_action[0:6][v] == 1:
+                                band_even_r = band_o2r / num_r
+                            else:
+                                band_even_r = 0
+                            # signal noise rate
+                            SNR = (1 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_r * 10 ** 6 + 0.000001))
+                            rate_o2r = band_even_r * math.log2(1 + SNR)  # Mb/s
+                            #                    print('rate_o2r', rate_o2r)
+                            # delay from o to r
+                            if rate_o2r > 0:
+                                delay_o2r = ((self.o_v[o_agent_num][3 + v * 6] * 8) / rate_o2r) * 1000
+                            else:
+                                delay_o2r = 0
+                            # the total delay in the stage 1
+                            #                    print('delay_v2o', delay_v2o, delay_o2r)
+                            # in case that OU choose to receive v task
+                            if o_action[v] == 1:
+                                ou_total_delay = delay_v2o + delay_o2r
+                                ou_delay[o_agent_num][v] = ou_total_delay
+                            # in case that RU is choosen to offloaded
+                            if rate_o2r > 0:
+                                ou_remain_ddl[o_agent_num][v] = ou_remain_ddl[o_agent_num][v] - ou_total_delay
+                                # Generate new vehicle task information
+                                self.o_v_new[o_agent_num][v * 6 + 5] = self.o_v_new[o_agent_num][v * 6 + 5] - ou_total_delay
 
-            o_receive_tmp = sum(o_action[0:5])
+            o_receive_tmp = sum(o_action[0:6])
             # OU - number for receiving increase
             num_o_receive[o_agent_num] = int(num_o_receive[o_agent_num] + o_receive_tmp)
             # tmp array to record the RU receive task amount in one step for one OU
@@ -411,6 +556,7 @@ class vorenv(gym.Env):
             for r in range(0, 3):
                 self.o_tra[o_agent_num][r] = num_o_tra[r]
 
+
         # take actions for RU agents  ru_action = [0,1]
         # array to save the ddl for each ru
         r_ddl = [0, 0, 0, 0, 0, 0]
@@ -425,52 +571,62 @@ class vorenv(gym.Env):
             band_r2m = 200
             # get the observation for RU
             r_pre_state = self.Mahhv_get_agent_obs()[r_agent_num]
-            pre_num_r_receive = o_tra_pre[r_agent_num // 3]
-            new_num_r_receive = pre_num_r_receive.copy()
+            new_num_r_receive = o_tra_pre[r_agent_num // 3].copy()
             " tasks amount assigned to RU and its nearby RU until TS t"
             for x in range(0, 3):
                 new_num_r_receive[x] = self.o_tra[r_agent_num // 3][x]
             " modify the task ddl on the RU"
-            if r_agent_num in (0, 3):
+            "RU 1最多观测两个任务"
+            if r_agent_num == 0:
                 for v_tmp in range(0, 2):
-                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][(r_agent_num % 3) + v_tmp * 6 + 5]
-            if r_agent_num in (1, 4):
+                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][v_tmp * 6 + 5]
+            if r_agent_num == 1:
+                for v_tmp in range(0, 3):
+                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][6 + v_tmp * 6 + 5]
+            if r_agent_num == 2:
+                for v_tmp in range(0, 3):
+                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][18 + v_tmp * 6 + 5]
+            if r_agent_num == 3:
+                for v_tmp in range(0, 3):
+                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][v_tmp * 6 + 5]
+            if r_agent_num == 4:
+                for v_tmp in range(0, 3):
+                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][12 + v_tmp * 6 + 5]
+            if r_agent_num == 5:
                 for v_tmp in range(0, 2):
-                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][(r_agent_num % 3) * 1 * 6 + v_tmp * 6 + 5]
-                dif = self.r_m_new[r_agent_num // 3][3 * 6: 4 * 6] * r_receive[r_agent_num][3]
-                r_pre_state_dif = np.insert(r_pre_state, 3 + 2 * 6, dif, axis=0)
-                r_pre_state = r_pre_state_dif
-            if r_agent_num in (2, 5):
-                for v_tmp in range(0, 2):
-                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][((r_agent_num % 3) + 1) * 6 + v_tmp * 6 + 5]
+                    r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][24 + v_tmp * 6 + 5]
             # Modify the state to keep the v task not received by RU as 0 (D, C, L)
+            print('r_pre_state', r_pre_state)
             r_receive_new = []
             for r_tmp_num in range(0, 6):
-                if r_tmp_num == 0 or r_tmp_num == 3:
+                if r_tmp_num == 0:
                     r_receive_new.append(r_receive[r_tmp_num][0:2])
-                if r_tmp_num == 1 or r_tmp_num == 4:
+                if r_tmp_num == 1:
                     r_receive_new.append(r_receive[r_tmp_num][1:4])
-                if r_tmp_num == 2 or r_tmp_num == 5:
-                    r_receive_new.append(r_receive[r_tmp_num][3:5])
+                if r_tmp_num == 2:
+                    r_receive_new.append(r_receive[r_tmp_num][3:6])
+                if r_tmp_num == 3:
+                    r_receive_new.append(r_receive[r_tmp_num][0:3])
+                if r_tmp_num == 4:
+                    r_receive_new.append(r_receive[r_tmp_num][2:5])
+                if r_tmp_num == 5:
+                    r_receive_new.append(r_receive[r_tmp_num][4:6])
             "real task situations that arrived at RUs"
-            if r_agent_num in (0, 2, 3, 5):
+            if r_agent_num in (0, 5):
                 for v in range(0, 2):
                     r_pre_state[3 + v * 6: 3 + v * 6 + 6] = np.multiply(r_pre_state[3 + v * 6: 3 + v * 6 + 6],  r_receive_new[r_agent_num][v])
             else:
                 for v in range(0, 3):
                     r_pre_state[3 + v * 6: 3 + v * 6 + 6] = np.multiply(r_pre_state[3 + v * 6: 3 + v * 6 + 6],  r_receive_new[r_agent_num][v])
             " tasks amount assigned to each MeNB "
-            if r_agent_num in (0, 2, 3, 5):
-                num_r_rtr[r_agent_num] = r_pre_state[16:18]
-            else:
-                num_r_rtr[r_agent_num] = r_pre_state[22:24]
+            num_r_rtr[r_agent_num] = r_pre_state[22:24]
             # communication channel setting
-            if r_agent_num in (0, 2, 3, 5):
+            if r_agent_num in (0, 5):
                 for v in range(0, 2):
                     # handle the task received by OU 1 assigned to RU 0 or RU 1
                     if r_receive_new[r_agent_num][v] == 1:
                         # Target MeNB m, distance between RU r and MeNB m
-                        m_index = int(r_agent_num * 2 + r_action[1 + v])
+                        m_index = int(r_action[2 + v])
                         dis_r2m = np.sqrt((self.r_location[r_agent_num][0] - self.m_location[m_index][0]) ** 2 +
                             (self.r_location[r_agent_num][1] - self.m_location[m_index][1]) ** 2 +
                             (self.r_location[r_agent_num][2] - self.m_location[m_index][2]) ** 2)
@@ -481,7 +637,7 @@ class vorenv(gym.Env):
                         # LoS probability
                         plos = 1 / (1 + 9.6 * math.exp(-0.16 * (90 * np.arcsin(ars) / (math.pi / 2) - 9.6)))
                         # sum of task allocated by RU r_agent_num which is equal to the task OU assigns to RU r_agent_num
-                        num_m = sum(r_receive[r_agent_num][0:5])
+                        num_m = sum(r_receive[r_agent_num][0:6])
                         # average bandwidth
                         band_even_m = band_r2m / num_m
                         # path loss
@@ -490,9 +646,9 @@ class vorenv(gym.Env):
                         SNR = (0.2 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_m * 10 ** 6))
                         rate_r2m = band_even_m * math.log2(1 + SNR)
                         # record the re-tra times
-                        if r_action[1 + v] == 0:
+                        if r_action[2 + v] == 0:
                             num_r_rtr[r_agent_num][0] = num_r_rtr[r_agent_num][0] + 1
-                        if r_action[1 + v] == 1:
+                        if r_action[2 + v] == 1:
                             num_r_rtr[r_agent_num][1] = num_r_rtr[r_agent_num][1] + 1
                         # calculate the retransmit delay
                         delay_r2m = ((r_pre_state[3 + v * 6 + 3] * 8) / rate_r2m) * 1000
@@ -509,7 +665,7 @@ class vorenv(gym.Env):
                     # handle the task received by OU 1 assigned to RU 0 or RU 1
                     if r_receive_new[r_agent_num][v] == 1:
                         # Target MeNB m, distance between RU r and MeNB m
-                        m_index = int(r_agent_num * 2 + r_action[1 + v])
+                        m_index = int(r_action[2 + v])
                         dis_r2m = np.sqrt(
                             (self.r_location[r_agent_num][0] - self.m_location[m_index][0]) ** 2 +
                             (self.r_location[r_agent_num][1] - self.m_location[m_index][1]) ** 2 +
@@ -521,7 +677,7 @@ class vorenv(gym.Env):
                         # LoS probability
                         plos = 1 / (1 + 9.6 * math.exp(-0.16 * (90 * np.arcsin(ars) / (math.pi / 2) - 9.6)))
                         # sum of task allocated by RU r_agent_num which is equal to the task OU assigns to RU r_agent_num
-                        num_m = sum(r_receive[r_agent_num][0:5])
+                        num_m = sum(r_receive[r_agent_num][0:6])
                         # average bandwidth
                         band_even_m = band_r2m / num_m
                         # path loss
@@ -530,9 +686,9 @@ class vorenv(gym.Env):
                         SNR = (0.2 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_m * 10 ** 6))
                         rate_r2m = band_even_m * math.log2(1 + SNR)
                         # record the re-tra times
-                        if r_action[1 + v] == 0:
+                        if r_action[2 + v] == 0:
                             num_r_rtr[r_agent_num][0] = num_r_rtr[r_agent_num][0] + 1
-                        if r_action[1 + v] == 1:
+                        if r_action[2 + v] == 1:
                             num_r_rtr[r_agent_num][1] = num_r_rtr[r_agent_num][1] + 1
                         # calculate the retransmit delay
                         delay_r2m = ((r_pre_state[3 + v * 6 + 3] * 8) / rate_r2m) * 1000

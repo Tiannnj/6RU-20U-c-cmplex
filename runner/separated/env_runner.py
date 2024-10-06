@@ -23,8 +23,6 @@ class EnvRunner(Runner):
         start = time.time()
         self.num_env_steps = 10000000
         self.episode_length = 100
-        self.num_env_steps = 10000000
-        self.episode_length = 10
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
 
         for episode in range(episodes):
@@ -298,7 +296,7 @@ class EnvRunner(Runner):
     @torch.no_grad()
     def eval(self, episode, total_num_steps):
         eval_episode_rewards = []
-        eval_obs = self.eval_envs.reset(0)
+        eval_obs = self.eval_envs.eval_reset(0)
 
         eval_rnn_states = np.zeros(
             (
