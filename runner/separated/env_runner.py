@@ -22,7 +22,7 @@ class EnvRunner(Runner):
     def run(self):
         start = time.time()
         self.num_env_steps = 10000000
-        self.episode_length = 100
+        self.episode_length = 10
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
 
         for episode in range(episodes):
@@ -121,22 +121,16 @@ class EnvRunner(Runner):
         for o in obs:
             share_obs.append(list(chain(*o)))
         share_obs = np.array(share_obs)  # shape = [env_num, agent_num * obs_dim]
-        share_obs_group1 = np.array(list(obs[0][0][0:3]) + list(obs[0][1][0:3]) + list(obs[0][2][0:3]) +
-                                    list(np.array(obs[0][0][3:15])) + list(np.array(obs[0][1][9:15])) + list(
-            np.array(obs[0][2][3:15])) +
-                                    list([np.array(obs[0][0][-3])]) + list([np.array(obs[0][1][-3])]) + list(
-            [np.array(obs[0][2][-3])]) +
-                                    list(np.array(obs[0][0][-2:])) + list(np.array(obs[0][1][-2:])) + list(
-            np.array(obs[0][2][-2:])))
+        share_obs_group1 = np.array(list(obs[0][0][0:3]) + list(obs[0][1][0:3]) + list(obs[0][2][0:3]) + list(obs[0][3][0:3]) +
+                                    list(np.array(obs[0][0][3:9])) + list(np.array(obs[0][1][3:21])) + list(np.array(obs[0][2][9:21])) +
+                                    list([np.array(obs[0][0][-3])]) + list([np.array(obs[0][1][-3])]) + list([np.array(obs[0][2][-3])]) + list([np.array(obs[0][3][-3])]) + list([np.array(obs[0][4][-3])]) +list([np.array(obs[0][5][-3])]) +
+                                    list(np.array(obs[0][0][-2:])) + list(np.array(obs[0][1][-2:])) + list(np.array(obs[0][2][-2:])) + list(np.array(obs[0][3][-2:])) + list(np.array(obs[0][4][-2:])) + list(np.array(obs[0][5][-2:])))
         share_obs_group1 = np.array(share_obs_group1)
 
-        share_obs_group2 = np.array(list(obs[0][3][0:3]) + list(obs[0][4][0:3]) + list(obs[0][5][0:3]) +
-                                    list(np.array(obs[0][3][3:15])) + list(np.array(obs[0][4][9:15])) + list(
-            np.array(obs[0][5][3:15])) +
-                                    list([np.array(obs[0][3][-3])]) + list([np.array(obs[0][4][-3])]) + list(
-            [np.array(obs[0][5][-3])]) +
-                                    list(np.array(obs[0][3][-2:])) + list(np.array(obs[0][4][-2:])) + list(
-            np.array(obs[0][5][-2:])))
+        share_obs_group2 = np.array(list(obs[0][2][0:3]) + list(obs[0][3][0:3]) + list(obs[0][4][0:3]) + list(obs[0][5][0:3]) +
+                                    list(np.array(obs[0][3][3:15])) + list(np.array(obs[0][4][3:21])) + list(np.array(obs[0][5][9:15])) +
+                                    list([np.array(obs[0][0][-3])]) + list([np.array(obs[0][1][-3])]) + list([np.array(obs[0][2][-3])]) + list([np.array(obs[0][3][-3])]) + list([np.array(obs[0][4][-3])]) +list([np.array(obs[0][5][-3])]) +
+                                    list(np.array(obs[0][0][-2:])) + list(np.array(obs[0][1][-2:])) + list(np.array(obs[0][2][-2:])) + list(np.array(obs[0][3][-2:])) + list(np.array(obs[0][4][-2:])) + list(np.array(obs[0][5][-2:])))
         share_obs_group2 = np.array(share_obs_group2)
 
         for agent_id in range(0, 3):
@@ -251,16 +245,16 @@ class EnvRunner(Runner):
             share_obs.append(list(chain(*o)))
         share_obs = np.array(share_obs)
 
-        share_obs_group1 = np.array(list(obs[0][0][0:3]) + list(obs[0][1][0:3]) + list(obs[0][2][0:3]) +
-                                    list(np.array(obs[0][0][3:15])) + list(np.array(obs[0][1][9:15])) + list(np.array(obs[0][2][3:15])) +
-                                    list([np.array(obs[0][0][-3])]) + list([np.array(obs[0][1][-3])]) + list([np.array(obs[0][2][-3])]) +
-                                    list(np.array(obs[0][0][-2:])) + list(np.array(obs[0][1][-2:])) + list(np.array(obs[0][2][-2:])))
+        share_obs_group1 = np.array(list(obs[0][0][0:3]) + list(obs[0][1][0:3]) + list(obs[0][2][0:3]) + list(obs[0][3][0:3]) +
+                                    list(np.array(obs[0][0][3:9])) + list(np.array(obs[0][1][3:21])) + list(np.array(obs[0][2][9:21])) +
+                                    list([np.array(obs[0][0][-3])]) + list([np.array(obs[0][1][-3])]) + list([np.array(obs[0][2][-3])]) + list([np.array(obs[0][3][-3])]) + list([np.array(obs[0][4][-3])]) +list([np.array(obs[0][5][-3])]) +
+                                    list(np.array(obs[0][0][-2:])) + list(np.array(obs[0][1][-2:])) + list(np.array(obs[0][2][-2:])) + list(np.array(obs[0][3][-2:])) + list(np.array(obs[0][4][-2:])) + list(np.array(obs[0][5][-2:])))
         share_obs_group1 = np.array(share_obs_group1)
 
-        share_obs_group2 = np.array(list(obs[0][3][0:3]) + list(obs[0][4][0:3]) + list(obs[0][5][0:3]) +
-                                    list(np.array(obs[0][3][3:15])) + list(np.array(obs[0][4][9:15])) + list(np.array(obs[0][5][3:15])) +
-                                    list([np.array(obs[0][3][-3])]) + list([np.array(obs[0][4][-3])]) + list([np.array(obs[0][5][-3])]) +
-                                    list(np.array(obs[0][3][-2:])) + list(np.array(obs[0][4][-2:])) + list(np.array(obs[0][5][-2:])))
+        share_obs_group2 = np.array(list(obs[0][2][0:3]) + list(obs[0][3][0:3]) + list(obs[0][4][0:3]) + list(obs[0][5][0:3]) +
+                                    list(np.array(obs[0][3][3:15])) + list(np.array(obs[0][4][3:21])) + list(np.array(obs[0][5][9:15])) +
+                                    list([np.array(obs[0][0][-3])]) + list([np.array(obs[0][1][-3])]) + list([np.array(obs[0][2][-3])]) + list([np.array(obs[0][3][-3])]) + list([np.array(obs[0][4][-3])]) +list([np.array(obs[0][5][-3])]) +
+                                    list(np.array(obs[0][0][-2:])) + list(np.array(obs[0][1][-2:])) + list(np.array(obs[0][2][-2:])) + list(np.array(obs[0][3][-2:])) + list(np.array(obs[0][4][-2:])) + list(np.array(obs[0][5][-2:])))
         share_obs_group2 = np.array(share_obs_group2)
 
         for agent_id in range(0, 3):
@@ -271,7 +265,7 @@ class EnvRunner(Runner):
                 np.array(list(obs[:, agent_id])),
                 rnn_states[:, agent_id],
                 rnn_states_critic[:, agent_id],
-                np.array([actions])[:, agent_id][0].reshape(1, 4),
+                np.array([actions])[:, agent_id][0].reshape(1, 5),
                 action_log_probs[:, agent_id],
                 values[:, agent_id],
                 rewards[:, agent_id],
@@ -286,7 +280,7 @@ class EnvRunner(Runner):
                 np.array(list(obs[:, agent_id])),
                 rnn_states[:, agent_id],
                 rnn_states_critic[:, agent_id],
-                np.array([actions])[:, agent_id][0].reshape(1, 4),
+                np.array([actions])[:, agent_id][0].reshape(1, 5),
                 action_log_probs[:, agent_id],
                 values[:, agent_id],
                 rewards[:, agent_id],

@@ -67,7 +67,7 @@ class vorenv(gym.Env):
         self.r_received_single = np.array([[0], [0], [0], [0], [0], [0]])
         self.r_assign = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]])
         self.r_info = {_: np.concatenate((self.r_location[_], self.r_v[_], self.r_received[_], self.r_assign[_])) for _ in range(self.n_r_agents)}
-        self.ru_action_space = MultiAgentActionSpace([spaces.Discrete(4) for _ in range(self.n_r_agents)])
+        self.ru_action_space = MultiAgentActionSpace([spaces.Discrete(5) for _ in range(self.n_r_agents)])
 
         # init RSU in each time step, RSU can observe itself's location, RSU’s CPU frequency
         self.n_MeNB = 12
@@ -193,7 +193,6 @@ class vorenv(gym.Env):
             _agent_r_obs[22: 24] = self.r_assign[agent_r]
             total_obs.append(_agent_r_obs)
 
-    #            print('_agent_r_obs', _agent_r_obs)
 
     def Mahhv_reset(self, x):
         # UAV initial state, including
@@ -215,7 +214,6 @@ class vorenv(gym.Env):
             range(self.n_v)}
         self.v_info = {k: v for k, v in self.v_info_all.items() if (10 * x <= k < 10 * (x + 1))}
 
-        #        print('self.v_info', self.v_info)
 
         # init OU in each time step, OU can observe itself's location, the vehicles info in it range, the task number it has received, number of tasks assigned to RU, OU service fairness
         self.n_o_agents = 2
@@ -228,12 +226,10 @@ class vorenv(gym.Env):
         self.o_info = {_: np.concatenate(
             (self.o_location[_], self.o_v[_], self.o_receive.flatten(), self.o_tra[_], self.o_fairness[_])) for _ in
             range(self.n_o_agents)}
-        #        print('self.o_info', self.o_info)
 
         # init RU in each time step, RU can observe itself's location, the vehicles info in it range, number of tasks assigned to RSU associated to it, RSU service fairness
         self.n_r_agents = 6
         self.r_location = np.array([[100, 0, 50], [150, 0, 50], [200, 0, 50], [300, 0, 50], [350, 0, 50], [400, 0, 50]])
-        print(np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1))
         self.r_v = np.concatenate(([np.concatenate((np.array(list(self.v_info.values()))[0:2, 0:6].reshape(-1), [0,0,0,0,0,0]))],
                                    [np.array(list(self.v_info.values()))[1:4, 0:6].reshape(-1)],
                                    [np.array(list(self.v_info.values()))[3:6, 0:6].reshape(-1)],
@@ -245,7 +241,6 @@ class vorenv(gym.Env):
         self.r_assign = np.array([[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]])
         self.r_info = {_: np.concatenate((self.r_location[_], self.r_v[_], self.r_received[_], self.r_assign[_]))
                        for _ in range(self.n_r_agents)}
-        #        print('self.r_info', self.r_info)
 
         # init MeNB in each time step, RSU can observe itself's location, RSU’s CPU frequency
         self.n_MeNB = 12
@@ -284,7 +279,6 @@ class vorenv(gym.Env):
         self.n_v = 10
         self.v_info = {k: v for k, v in self.v_info_all.items() if (10 * x <= k < 10 * (x + 1))}
 
-        #        print('self.v_info', self.v_info)
 
         # init OU in each time step, OU can observe itself's location, the vehicles info in it range, the task number it has received, number of tasks assigned to RU, OU service fairness
         self.n_o_agents = 2
@@ -297,7 +291,6 @@ class vorenv(gym.Env):
         self.o_info = {_: np.concatenate(
             (self.o_location[_], self.o_v[_], self.o_receive.flatten(), self.o_tra[_], self.o_fairness[_])) for _ in
             range(self.n_o_agents)}
-        #        print('self.o_info', self.o_info)
 
         # init RU in each time step, RU can observe itself's location, the vehicles info in it range, number of tasks assigned to RSU associated to it, RSU service fairness
         self.n_r_agents = 6
@@ -362,7 +355,6 @@ class vorenv(gym.Env):
             for v_num in range(0, 6):
                 ou_remain_ddl[o_num][v_num] = self.o_v[o_num][6 * v_num + 5]
         ou_delay = [[0] * 6, [0] * 6]
-        print('self.o_v', self.o_v)
         self.o_v_new = self.o_v.copy()
         self.r_m_new = self.o_v.copy()
         rewards_ou = [0 for _ in range(self.n_o_agents)]
@@ -374,7 +366,6 @@ class vorenv(gym.Env):
         "revise the RU actions and corresponding OU actions consequently"
         "In 6 RU situation, the group has been divided in 2 groups"
         "for OU 1 group"
-        print('agents_action', agents_action)
         if agents_action[0][0] == 0 and agents_action[1][0] == 0:
             agents_action[0][0] = 1
             ou_action[0][7] = [0]
@@ -463,7 +454,6 @@ class vorenv(gym.Env):
         num_r_rtr = np.array([[0, 0], [0, 0], [0, 0,], [0, 0], [0, 0], [0, 0]])
         num_o_tra_total = np.array([[0, 0, 0], [0, 0, 0]])
         # take actions for OU agents
-        print('ou_action', ou_action)
         for o_agent_num, o_action in enumerate(ou_action):
             band_o2v = 20
             band_o2r = 20
@@ -522,14 +512,12 @@ class vorenv(gym.Env):
                             # signal noise rate
                             SNR = (1 * 1000 * 10 ** (- PL / 10)) / ((10 ** -17.4) * (band_even_r * 10 ** 6 + 0.000001))
                             rate_o2r = band_even_r * math.log2(1 + SNR)  # Mb/s
-                            #                    print('rate_o2r', rate_o2r)
                             # delay from o to r
                             if rate_o2r > 0:
                                 delay_o2r = ((self.o_v[o_agent_num][3 + v * 6] * 8) / rate_o2r) * 1000
                             else:
                                 delay_o2r = 0
                             # the total delay in the stage 1
-                            #                    print('delay_v2o', delay_v2o, delay_o2r)
                             # in case that OU choose to receive v task
                             if o_action[v] == 1:
                                 ou_total_delay = delay_v2o + delay_o2r
@@ -551,7 +539,6 @@ class vorenv(gym.Env):
                 num_o_tra[r] = num_o_tra[r] + o_tra_tmp[r]
 
             # The fairness in the OU observation state has to be changed
-            #            print('num_o_receive[o_agent_num]',num_o_receive[o_agent_num])
             self.o_receive[o_agent_num] = num_o_receive[o_agent_num]
             for r in range(0, 3):
                 self.o_tra[o_agent_num][r] = num_o_tra[r]
@@ -596,7 +583,6 @@ class vorenv(gym.Env):
                 for v_tmp in range(0, 2):
                     r_pre_state[3 + v_tmp * 6 + 5] = self.r_m_new[r_o][24 + v_tmp * 6 + 5]
             # Modify the state to keep the v task not received by RU as 0 (D, C, L)
-            print('r_pre_state', r_pre_state)
             r_receive_new = []
             for r_tmp_num in range(0, 6):
                 if r_tmp_num == 0:
@@ -718,7 +704,6 @@ class vorenv(gym.Env):
             f_o_tra = (sum(self.o_tra[agent_o])) ** 2 / (3 * y + 0.0000001)
             o_delay = sum(ou_remain_ddl[agent_o])
             rewards_ou[agent_o] = float(f_o_tra)
-        # print('rewards_ou', rewards_ou)
 
         # calculate the reward for each RU
         z = 0
@@ -730,11 +715,7 @@ class vorenv(gym.Env):
             f_r_rtr[agent_r] = (sum(self.r_assign[agent_r])) ** 2 / (2 * z + 0.0000001)
             # rewards_ru[agent_r] = float(r_ddl[agent_r] * rewards_ou[agent_r//1] * f_r_rtr )
         rewards_ru = sum(r_ddl) * (np.prod(rewards_ou) ** 2) * (np.prod(f_r_rtr) ** 2)
-        # print('/', rewards_ru, sum(r_ddl))
-        # print('//', self.o_tra, '\n', rewards_ou, '\n', np.prod(rewards_ou))
-        # print('///', self.r_assign, '\n', f_r_rtr, '\n', np.prod(f_r_rtr))
         rewards_ru_average = [rewards_ru] * self.n_r_agents
-        # print('rewards_ru', rewards_ru)
 
         # Generate the total reward
         rewards = rewards_ru_average
