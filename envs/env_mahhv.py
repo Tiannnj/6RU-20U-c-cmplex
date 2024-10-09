@@ -34,6 +34,12 @@ class MAHHVEnv():
 #        print('ooobs', obs)
         return np.array(obs)
 
+    def eval_reset(self, x):
+        obs = [env.eval_reset(x) for env in self.envs]  # [env_num, agent_num, obs_dim]
+        #        print('ooobs', obs)
+        return np.array(obs)
+
+
     def close(self):
         for env in self.envs:
             env.close()

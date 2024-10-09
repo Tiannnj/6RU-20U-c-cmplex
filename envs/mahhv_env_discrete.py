@@ -43,14 +43,13 @@ class MahhvDiscreteActionEnv(object):
         for agent_idx in range(self.num_agent):
             # physical action space
             u_action_space = spaces.Discrete(self.r_action_dim)  # ou的动作空间
-#            print('total_action_space[agent_idx]',u_action_space)
 
             self.action_space.append(u_action_space)
 
 
             # observation space
             # share_obs_dim += self.signal_obs_dim
-            share_obs_dim = 63
+            share_obs_dim = 66
             self.observation_space.append(
                 spaces.Box(
                     low=-np.inf,
@@ -82,12 +81,9 @@ class MahhvDiscreteActionEnv(object):
 
     def reset(self, x):
         obs = self.env.reset(x)
-#        print('obbbbs', np.stack(obs))
         return np.stack(obs)
-
     def eval_reset(self, x):
         obs = self.env.eval_reset(x)
-        #        print('obbbbs', np.stack(obs))
         return np.stack(obs)
 
     def close(self):

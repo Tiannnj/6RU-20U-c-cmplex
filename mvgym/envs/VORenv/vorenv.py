@@ -267,7 +267,7 @@ class vorenv(gym.Env):
         # initial count
         self._step_count = 0
         self._total_episode_reward = [0 for _ in range(self.n_agents)]
-        self._agent_dones = [False for _ in range(self.n_agentsr)]
+        self._agent_dones = [False for _ in range(self.n_agents)]
 
         total_D = np.random.uniform(0.1, 0.6, 1000)
         total_C = np.random.uniform(0.1, 0.6, 1000)
@@ -619,7 +619,7 @@ class vorenv(gym.Env):
                         # height of OU
                         height_o = 50
                         # the angle used to calculate the los probability (r2m)
-                        ars = dis_r2m / height_o
+                        ars = height_o/  dis_r2m
                         # LoS probability
                         plos = 1 / (1 + 9.6 * math.exp(-0.16 * (90 * np.arcsin(ars) / (math.pi / 2) - 9.6)))
                         # sum of task allocated by RU r_agent_num which is equal to the task OU assigns to RU r_agent_num
@@ -659,7 +659,7 @@ class vorenv(gym.Env):
                         # height of OU
                         height_o = 50
                         # the angle used to calculate the los probability (r2m)
-                        ars = dis_r2m / height_o
+                        ars = height_o/  dis_r2m
                         # LoS probability
                         plos = 1 / (1 + 9.6 * math.exp(-0.16 * (90 * np.arcsin(ars) / (math.pi / 2) - 9.6)))
                         # sum of task allocated by RU r_agent_num which is equal to the task OU assigns to RU r_agent_num
@@ -686,7 +686,6 @@ class vorenv(gym.Env):
                         # np.array(list(self.r_m_new()))[v, 5] = np.array(list(self.o_v_new.values()))[v, 5] - rm_total_delay
                         revised_ddl = max(r_pre_state[3 + v * 6 + 5] - rm_total_delay, [0])
                         r_ddl[r_agent_num] = r_ddl[r_agent_num] + np.array(revised_ddl)
-
             # The fairness in the RU observation state for receiving has to be updated
             self.r_received[r_agent_num] = new_num_r_receive
             self.r_received_single[r_agent_num] = new_num_r_receive[r_agent_num % 3]

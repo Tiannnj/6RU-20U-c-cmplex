@@ -69,8 +69,9 @@ class Categorical(nn.Module):
             x = x.reshape(1, 5, 2)
         if available_actions is not None:
             x[available_actions == 0] = -1e10
-        print(x)
+
         return FixedCategorical(logits=x)
+
 
 
 class DiagGaussian(nn.Module):

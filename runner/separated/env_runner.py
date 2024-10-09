@@ -22,7 +22,7 @@ class EnvRunner(Runner):
     def run(self):
         start = time.time()
         self.num_env_steps = 10000000
-        self.episode_length = 10
+        self.episode_length = 100
         episodes = int(self.num_env_steps) // self.episode_length // self.n_rollout_threads
 
         for episode in range(episodes):
@@ -228,7 +228,6 @@ class EnvRunner(Runner):
             rnn_states,
             rnn_states_critic,
         ) = data
-
         rnn_states[dones == True] = np.zeros(
             ((dones == True).sum(), self.recurrent_N, self.hidden_size),
             dtype=np.float32,

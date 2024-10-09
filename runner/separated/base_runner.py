@@ -144,6 +144,7 @@ class Runner(object):
             train_info = self.trainer[agent_id].train(self.buffer[agent_id])
             train_infos.append(train_info)
             self.buffer[agent_id].after_update()
+
         return train_infos
 
     def save(self):
