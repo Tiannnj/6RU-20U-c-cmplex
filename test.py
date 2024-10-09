@@ -139,7 +139,8 @@ rate_o2r = band_even_r * math.log2(1 + SNR)  # Mb/s
 delay_o2r = (0.2 * 8) / rate_o2r
 print('delay_o2r', delay_o2r)
 
-self.n_v = 10
-self.v_info = {_: [_ * 50 + 10, 0, 0, random.uniform(0.1, 0.6), random.uniform(0.1, 0.6), random.uniform(200, 1000)] for _
-               in range(self.n_v)}
-print(self.v_info)
+total_D = np.random.uniform(0.1,0.6, 1000)
+total_C = np.random.uniform(0.1,0.6, 1000)
+total_L = np.random.uniform(200,1000, 1000)
+v_info_all = {_: [(_ % 10) * 50 + 10, 0, 0, total_D[_], total_C[_], total_L[_]] for _ in range(1000)}
+print(v_info_all)
