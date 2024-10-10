@@ -225,6 +225,7 @@ def get_config():
         help="Whether to use global state or concatenated obs",
     )
 
+
     # replay buffer parameters
     parser.add_argument("--episode_length", type=int, default=2000, help="Max length for any episode")
 
