@@ -113,7 +113,7 @@ class EnvRunner(Runner):
         D_array = np.random.uniform(0.1, 0.6, 100)
         C_array = np.random.uniform(0.1, 0.6, 100)
         L_array = np.random.uniform(20, 200, 100)
-        self.v_info_all = {_: [_ * 50 + 10, 0, 0, random.uniform(0.1, 0.6), random.uniform(0.1, 0.6), random.uniform(20, 200)] for
+        self.v_info_all = {_: [_ * 50 + 10, 0, 0, random.uniform(0.1, 0.6), random.uniform(0.1, 0.6), random.uniform(200, 1000)] for
                 _ in range(1000)}
         obs = self.envs.reset(0)  # shape = [env_num, agent_num, obs_dim]
         share_obs = []

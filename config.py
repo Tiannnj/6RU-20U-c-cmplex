@@ -257,7 +257,7 @@ def get_config():
     parser.add_argument(
         "--hidden_size",
         type=int,
-        default=256,
+        default=512,
         help="Dimension of hidden layers for actor/critic networks",
     )
     parser.add_argument(
